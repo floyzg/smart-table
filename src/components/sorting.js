@@ -6,11 +6,23 @@ export function initSorting(columns) {
         let order = null;
 
         if (action && action.name === 'sort') {
-            // @todo: #3.1 — запомнить выбранный режим сортировки
+            // #3.1 — запомнить выбранный режим сортировки
+            const btn = action;
+            const colField = btn.dataset.field;
+            const nextOrder = sortMap[btn.dataset.value || 'none'] || 'none';
+            btn.dataset.value = nextOrder;
+            field = colField;
+            order = nextOrder;
 
-            // @todo: #3.2 — сбросить сортировки остальных колонок
+            // #3.2 — сбросить сортировки остальных колонок
+            columns.filter(el => el !== btn).forEach(el => el.dataset.value = 'none');
         } else {
-            // @todo: #3.3 — получить выбранный режим сортировки
+            // #3.3 — получить выбранный режим сортировки
+            const active = columns.find(el => (el.dataset.value || 'none') !== 'none');
+            if (active) {
+                field = active.dataset.field;
+                order = active.dataset.value;
+            }
         }
 
         return sortCollection(data, field, order);
