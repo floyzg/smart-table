@@ -10,14 +10,14 @@ const filteringComparator = createComparison(
   ],
   [
     // Включающее сравнение только для некоторых полей
-    (key, sourceValue, targetValue) => {
+    (key, srcValue, targetValue) => {
       if (
         ["date", "customer"].includes(key) &&
-        typeof sourceValue === "string" &&
+        typeof srcValue === "string" &&
         typeof targetValue === "string"
       ) {
         return {
-          result: sourceValue.toLowerCase().includes(targetValue.toLowerCase()),
+          result: srcValue.toLowerCase().includes(targetValue.toLowerCase()),
         };
       }
       return { continue: true };
