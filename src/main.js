@@ -12,35 +12,34 @@ import { initSorting } from "./components/sorting.js";
 import { initFiltering } from "./components/filtering.js";
 import { initSearching } from "./components/searching.js";
 
-// Исходные данные используемые в render()
-const { data, ...indexes } = initData(sourceData);
+// API вместо прямых данных
+const api = initData(sourceData);
 
 /**
  * Сбор и обработка полей из таблицы
  * @returns {Object}
  */
 function collectState() {
-  const state = processFormData(new FormData(sampleTable.container));
-
-  return {
-    ...state,
-  };
+  return processFormData(new FormData(sampleTable.container));
 }
 
 /**
  * Перерисовка состояния таблицы при любых изменениях
  * @param {HTMLButtonElement?} action
  */
-function render(action) {
-  let state = collectState(); // состояние полей из таблицы
-  let result = [...data]; // копируем для последующего изменения
-  // использование: поиск - фильтрация - сортировка - пагинация
-  result = searching(result, state, action);
-  result = filtering(result, state, action);
-  result = sorting(result, state, action);
-  result = pagination(result, state, action);
+async function render(action) {
+  const state = collectState();
+  let query = {};
 
-  sampleTable.render(result);
+  query = applySearching(query, state, action);
+  query = applyFiltering(query, state, action);
+  query = applySorting(query, state, action);
+  query = applyPagination(query, state, action);
+
+  const { total, items } = await api.getRecords(query);
+
+  updatePagination(total, query);
+  sampleTable.render(items);
 }
 
 const sampleTable = initTable(
@@ -53,17 +52,17 @@ const sampleTable = initTable(
   render
 );
 
-// Рендер: поиск, заголовок, фильтры, пагинацию
 sampleTable.container.style.setProperty("--columns", "1fr 1fr 1fr 1fr");
 
-const sorting = initSorting(
+const applySorting = initSorting(
   Array.from(sampleTable.container.querySelectorAll('button[name="sort"]'))
 );
 
 const pageLabelTemplate = sampleTable.elements.pages.querySelector(
   "label.pagination-button"
 );
-const pagination = initPagination(
+
+const { applyPagination, updatePagination } = initPagination(
   {
     pages: sampleTable.elements.pages,
     fromRow: sampleTable.elements.fromRow,
@@ -73,10 +72,19 @@ const pagination = initPagination(
   () => pageLabelTemplate.cloneNode(true)
 );
 
-const filtering = initFiltering(sampleTable.elements, indexes);
-const searching = initSearching(sampleTable.elements.search);
+const { applyFiltering, updateIndexes } = initFiltering(sampleTable.elements);
+
+const applySearching = initSearching("search");
 
 const appRoot = document.querySelector("#app");
 appRoot.appendChild(sampleTable.container);
 
-render();
+async function init() {
+  const indexes = await api.getIndexes();
+
+  updateIndexes(sampleTable.elements, {
+    searchBySeller: indexes.sellers,
+  });
+}
+
+init().then(render);

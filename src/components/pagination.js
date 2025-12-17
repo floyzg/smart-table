@@ -4,59 +4,64 @@ export const initPagination = (
   { pages, fromRow, toRow, totalRows },
   createPage
 ) => {
-  // #2.3 — подготовить шаблон кнопки для страницы и очистить контейнер
+  let pageCount = 1;
+
   const renderPageBtn = (pageNumber, currentPage) => {
     const el = createPage();
     const input = el.querySelector('input[name="page"]');
     const span = el.querySelector("span");
+
     if (input) input.value = String(pageNumber);
     if (span) span.textContent = String(pageNumber);
     if (input) input.checked = pageNumber === currentPage;
+
     return el;
   };
 
-  return (data, state, action) => {
-    // #2.1 — посчитать количество страниц, объявить переменные и константы
-    const rowsPerPage = Number(state.rowsPerPage || 10) || 10;
-    const total = data.length;
-    const maxPage = Math.max(1, Math.ceil(total / rowsPerPage));
-    let currentPage = Number(state.page || 1) || 1;
-    currentPage = Math.min(Math.max(1, currentPage), maxPage);
+  const applyPagination = (query, state, action) => {
+    const limit = Number(state.rowsPerPage || 10) || 10;
+    let page = Number(state.page || 1) || 1;
 
-    // #2.6 — обработать действия
     if (action && action.name) {
       switch (action.name) {
         case "first":
-          currentPage = 1;
+          page = 1;
           break;
         case "prev":
-          currentPage = Math.max(1, currentPage - 1);
+          page = Math.max(1, page - 1);
           break;
         case "next":
-          currentPage = Math.min(maxPage, currentPage + 1);
+          page = Math.min(pageCount, page + 1);
           break;
         case "last":
-          currentPage = maxPage;
+          page = pageCount;
           break;
         default:
           break;
       }
     }
 
-    // #2.4 — получить список видимых страниц и вывести их
-    const visible = getPages(currentPage, maxPage, 5);
+    return Object.assign({}, query, { limit, page });
+  };
+
+  const updatePagination = (total, { page, limit }) => {
+    pageCount = Math.max(1, Math.ceil(total / limit));
+
+    const currentPage = Math.min(Math.max(1, Number(page || 1)), pageCount);
+
+    // кнопки страниц
+    const visible = getPages(currentPage, pageCount, 5);
     const pageButtons = visible.map((n) => renderPageBtn(n, currentPage));
     pages.replaceChildren(...pageButtons);
 
-    // #2.5 — обновить статус пагинации
-    const firstIndex = total === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
-    const lastIndex = Math.min(total, currentPage * rowsPerPage);
+    // статус
+    const firstIndex = total === 0 ? 0 : (currentPage - 1) * limit + 1;
+    const lastIndex = Math.min(total, currentPage * limit);
+
     fromRow.textContent = String(firstIndex);
     toRow.textContent = String(lastIndex);
     totalRows.textContent = String(total);
-
-    // #2.2 — посчитать сколько строк нужно пропустить и получить срез данных
-    const skip = (currentPage - 1) * rowsPerPage;
-    return data.slice(skip, skip + rowsPerPage);
   };
+
+  return { applyPagination, updatePagination };
 };
