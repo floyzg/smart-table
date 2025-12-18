@@ -79,6 +79,16 @@ const applySearching = initSearching("search");
 const appRoot = document.querySelector("#app");
 appRoot.appendChild(sampleTable.container);
 
+const { from, to } = sampleTable.elements;
+
+[from, to].forEach((input) => {
+  if (!input) return;
+
+  input.addEventListener("change", () => {
+    render();
+  });
+});
+
 async function init() {
   const indexes = await api.getIndexes();
 

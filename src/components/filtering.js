@@ -46,7 +46,14 @@ export function initFiltering(elements) {
 
     const filter = {};
 
-    const FILTER_FIELDS = ["seller", "customer", "date", "total", "from", "to"];
+    const FILTER_FIELDS = [
+      "seller",
+      "customer",
+      "date",
+      "total",
+      "totalFrom",
+      "totalTo",
+    ];
 
     FILTER_FIELDS.forEach((field) => {
       if (state[field]) {
